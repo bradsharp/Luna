@@ -1,3 +1,20 @@
+--[[
+	Syntax is known
+
+	Private variables should be creatable from within the class
+	using this.VariableName = x, they should not be accessible
+	outside of the definition
+
+	It should be possible to call functions with this.Destroy()
+
+	Public variables should be accessible from within the class
+	using this.VariableName = y
+
+	Anything with the __prefix in the definition should not be
+	accessible
+
+]]
+
 -- Wrapper object used to create a private scope within the definition
 local createWrapper, getWrapper do
 	local indexObj = function (object, index)
@@ -77,7 +94,7 @@ local createWrapper, getWrapper do
 end
 
 function createObject(definition, ...)
-	local object = {{}}
+	local object = {__properties = {}}
 	local wrapper = createWrapper(object)
 	setmetatable(object, definition.__metatable)
 	local constructor = definition.__construct
@@ -141,7 +158,7 @@ local constructClass do
 			__index = function (this, index)
 				assert(string.sub(index, 1, 2) ~= "__",
 					"Metaindexing is forbidden")
-				local public = rawget(this, 1)
+				local public = rawget(this, "__properties")
 				local value = public[index]
 				if value then
 					return value
@@ -175,7 +192,7 @@ local constructClass do
 				if metamethods.__newindex then
 					metamethods.__newindex(getWrapper(this), index, value)
 				end
-				local public = rawget(this, 1)
+				local public = rawget(this, "__properties")
 				local currentValue = public[index]
 				if currentValue then
 					if type(value) == type(currentValue) then
