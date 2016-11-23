@@ -1,4 +1,4 @@
-# Multiple Inheritance OOP
+# Luamond
 An advanced module that allows you to create classes with a C# like structure which support multiple inheritance.
 
 The library is currently in its early stages so expect bugs and or performance issues.
