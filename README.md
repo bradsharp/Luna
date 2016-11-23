@@ -10,6 +10,7 @@ The library is currently in its early stages so expect bugs and or performance i
 - Offers a natural transition between private and public variables
 - Supports static methods
 - Supports all versions of Lua
+- Avoids ambiguity between parent classes
 
 ## Usage
 Download the source file and place it in your projects directory. `require` the module and store it in the variable `class`
