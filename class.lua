@@ -1,20 +1,3 @@
---[[
-	Syntax is known
-
-	Private variables should be creatable from within the class
-	using this.VariableName = x, they should not be accessible
-	outside of the definition
-
-	It should be possible to call functions with this.Destroy()
-
-	Public variables should be accessible from within the class
-	using this.VariableName = y
-
-	Anything with the __prefix in the definition should not be
-	accessible
-
-]]
-
 -- Wrapper object used to create a private scope within the definition
 local createWrapper, getWrapper do
 	local indexObj = function (object, index)
