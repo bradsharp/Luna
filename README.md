@@ -191,7 +191,7 @@ Static functions and variables exist within the definition itself rather than pe
 local class = require'class'
 
 local website = class {
-    domain = "http://www.";
+    Domain = "http://www.";
 }
 
 print(website.Domain)
