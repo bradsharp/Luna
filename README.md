@@ -1,22 +1,19 @@
 # luna
-An advanced module that allows you to create classes with a C# like structure which support multiple inheritance.
-
-The library is currently in its early stages so expect bugs and or performance issues.
+luna offers elegant syntax which allows you to build beautiful object oriented programs with ease.
 
 ## Features
-- Supports multiple object inheritance
-- Definitions follow a C# like structure
+- Supports multiple object inheritance, avoiding ambiguity between parent-classes
+- Supports all versions of Lua
 - Supports accessors and mutators
 - Offers a natural transition between private and public variables
 - Supports static methods
-- Supports all versions of Lua
-- Avoids ambiguity between parent classes
+- Definitions follow a C# like structure
 
 ## Usage
 Download the source file and place it in your projects directory. `require` the module and store it in the variable `class`
 
 ```lua
-local class = require'classes'
+local class = require'class'
 ```
 ### Definition
 Classes are defined as follows
@@ -24,7 +21,7 @@ Classes are defined as follows
 ```lua
 local class = require'class'
 
-local className = class {
+local planet = class {
 
 }
 ```
@@ -34,9 +31,9 @@ This module offers classes a private and public scope. Private variables can onl
 
 When a function in the class is called a wrapper object is passed to the function as the first parameter. This wrapper allows you to set variables regardless of whether they are defined or not.
 ```lua
-local fanta = drink()
-print(fanta.PrivateVariable)
->> Error PrivateVariable is not a valid member of drink
+local ceres = planet()
+print(ceres.PrivateVariable)
+>> error PrivateVariable is not a valid member of planet
 ```
 ...but from the definition itself
 ```lua
@@ -59,18 +56,18 @@ Properties are required to remain whatever type they are defined as, tables, use
 ```lua
 local class = require'class'
 
-local drink = class {
+local planet = class {
     Name = "";
-    Price = 0;
+    Magnitude = 0;
 }
 ```
 #### Indexing
 ```lua
-local fanta = drink()
-fanta.Name = "Fanta"
-fanta.Price = 100
-print(fanta.Name, fanta.Price) 
->> Fanta, 100
+local ceres = planet()
+ceres.Name = "Ceres"
+ceres.Magnitude = 3.36
+print(ceres.Name, ceres.Magnitude) 
+>> Ceres, 3.36
 ```
 
 ### Accessors and Mutators
@@ -80,23 +77,24 @@ Accessors are useful when you wish to store a table, userdata or value of unknow
 ```lua
 local class = require'class'
 
-local drink = class {
-    Ingredients = {
+local planet = class {
+    Radius = 0;
+    SurfaceArea = {
         get = function (this)
-            return this._Ingredients or {}
+            return 4 * math.pi * this.Radius * this.Radius
         end,
         set = function (this, value)
-            this._Ingredients = value
+            this.Radius = math.sqrt(value) / (4 * math.pi)
         end
     }
 }
 ```
 #### Indexing
 ```lua
-local fanta = drink()
-fanta.Ingredients = {"Orange", "Sugar", "Other"}
-print(table.concat(fanta.Ingredients))
->> Orange, Sugar, Other
+local ceres = planet()
+ceres.Radius = 473000
+print(ceres.SurfaceArea)
+>> 2811461531180
 ```
 
 ### Methods
@@ -105,22 +103,25 @@ Methods are functions which can be called on your class, the parameters given ar
 ```lua
 local class = require'class'
 
-local drink = class {
-    Volume = 100;
-
-    Drink = function (this)
-        this.Volume = 0
+local planet = class {
+    Mass = 0;
+    GetGravitationalForce = function (this, distance)
+        return (this.Mass * 6.67e-11) / (distance * distance)
     end;
 }
 ```
 #### Calling
 ```lua
-local fanta = drink()
-fanta:Drink()
+local ceres = planet()
+ceres.Mass = 9.393e20
+print(ceres:GetGravitationalForce(473000))
+>> 0.28003213709443
 ```
 ...or from the definition
 ```lua
-this.Drink()
+this.Mass = 9.393e20
+print(this.GetGravitationalForce(473000))
+>> 0.28003213709443
 ```
 
 
@@ -130,16 +131,20 @@ The `__construct` method is called when a new object is created. It allows you t
 ```lua
 local class = require'class'
 
-local drink = class {
-    __construct = function (this, ...)
-        print(...)
+local planet = class {
+    Name = "";
+    Radius = 0;
+    __construct = function (this, name, radius)
+        this.Name = name
+        this.Radius = radius
     end
 }
 ```
 #### Instancing
 ```lua
-local fanta = drink("Orange", "Sugar")
->> Orange, Sugar
+local ceres = planet("Ceres", 473000)
+print(ceres.Name, ceres.Radius)
+>> Ceres, 473000
 ```
 ### Metamethods
 This module supports metamethods which can be added to your definition.
@@ -147,7 +152,7 @@ This module supports metamethods which can be added to your definition.
 ```lua
 local class = require'class'
 
-local drink = class {
+local planet = class {
     Name = "";
     __tostring = function (this)
         return this.Name
@@ -164,24 +169,24 @@ Both these methods are ignored when indexing private variables.
 This module supports multiple inheritance which means a class can inherit many other classes.
 
 ```lua
-local drink = class {
+local planet = class {
+    Age = 0;
     Name = "";
+    
 }
 
-local purchaseable = class {
-    Price = 0;
-    Purchase = function (this, user)
-        if user.Money >= this.Price then
-            user.Money = user.Money - this.Price
-            user:Give(this())
-        end
-    end
+local solarSystem = class {
+    DistanceFromSun = 0;
 }
 
-local fizzyDrink = class (drink, purchaseable) {
-    Name = "Soda";
-    Price = 100;
+local localPlanet = class (solarSystem, planet) {
+    ShortestDistanceFromEarth = 0;
+    LongestDistanceFromEarth = 0;
 }
+```
+...or to just inherit multiple classes
+```lua
+local localPlanet = class (solarSystem, planet)
 ```
 In the case of two inherited classes having a different value for a property, the class that is first in the list of inherited classes will be considered more important and therefore have its value used. This is also the case for metamethods.
 
