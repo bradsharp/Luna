@@ -207,6 +207,9 @@ print(website.Domain)
 ### Reflection
 Reflection is not currently supported
 
+## Footnote
+If you feel hurt by the fact I have suggested that Ceres is a planet, pretend it's the 1800's.
+
 ## License
 
 MIT License
