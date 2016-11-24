@@ -184,9 +184,9 @@ local localPlanet = class (solarSystem, planet) {
     LongestDistanceFromEarth = 0;
 }
 ```
-...or to just inherit multiple classes
+...or to just inherit multiple classes (the braces are required)
 ```lua
-local localPlanet = class (solarSystem, planet)
+local localPlanet = class (solarSystem, planet) {}
 ```
 In the case of two inherited classes having a different value for a property, the class that is first in the list of inherited classes will be considered more important and therefore have its value used. This is also the case for metamethods.
 
