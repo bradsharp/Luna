@@ -34,7 +34,7 @@ local list = class {
                     return i, v
                 end
             end
-            return iter, this.List
+            return iter
         end
     };
 
