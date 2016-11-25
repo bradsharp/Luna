@@ -1,4 +1,4 @@
-local class = require'class'
+local class = require'lib/class'
 
 local list = class {
 
@@ -26,14 +26,16 @@ local list = class {
 
     Iterator = {
         get = function (this)
-            return ipairs(this.List)
+            local i = 0
+            local function iter ()
+                i = i + 1
+                local v = this.List[i]
+                if v then
+                    return i, v
+                end
+            end
+            return iter, this.List
         end
     };
 
 }
-
-local newList = list("Hi", "Hello", "Howdy")
-
-for i = 1, newList.Length do
-    print(newList[i])
-end
