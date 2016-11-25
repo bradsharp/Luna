@@ -27,7 +27,7 @@ local list = class {
     Iterator = {
         get = function (this)
             local i = 0
-            return function iter ()
+            return function ()
                 i = i + 1
                 local v = this.List[i]
                 if v then
