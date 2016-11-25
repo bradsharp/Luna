@@ -1,4 +1,23 @@
--- Wrapper object used to create a private scope within the definition
+--[[
+
+	luna class library
+	https://github.com/BradSharp/luna
+
+	MIT License
+	Copyright (c) 2016 Brad Sharp
+
+	Permission is hereby granted, free of charge, to any person obtaining a
+	copy of this software and associated documentation files (the "Software"),
+	to deal in the Software without restriction, including without limitation
+	the rights to use, copy, modify, merge, publish, distribute, sublicense,
+	and/or sell copies of the Software, and to permit persons to whom the
+	Software is furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included
+	in all copies or substantial portions of the Software.
+
+]]
+
 local createWrapper, getWrapper do
 	local indexObj = function (object, index)
 		return object[index]
@@ -124,7 +143,6 @@ local constructClass do
 		__call = createObject,
 	}
 	function constructClass(definition, inherits)
-		-- Check definition integrity and create wraps
 		for i, v in pairs(definition) do
 			assert(type(i) == "string",
 				"Invalid property name " .. tostring(i))
@@ -204,6 +222,7 @@ local constructClass do
 				end
 			end
 		}
+		-- Wrap the metamethods
 		for i, v in pairs(metamethods) do
 			local method = string.sub(i, 3)
 			if not (method == "index" or method == "newindex") then
@@ -212,6 +231,7 @@ local constructClass do
 				end
 			end
 		end
+		definition.__construct = metamethods.__construct
 		definition.__metatable = metatable
 		return setmetatable(definition, definitionMetatable)
 	end
