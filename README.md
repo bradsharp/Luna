@@ -84,7 +84,7 @@ local planet = class {
             return 4 * math.pi * this.Radius * this.Radius
         end,
         set = function (this, value)
-            this.Radius = math.sqrt(value) / (4 * math.pi)
+            this.Radius = math.sqrt(value / (4 * math.pi))
         end
     }
 }
