@@ -27,14 +27,13 @@ local list = class {
     Iterator = {
         get = function (this)
             local i = 0
-            local function iter ()
+            return function iter ()
                 i = i + 1
                 local v = this.List[i]
                 if v then
                     return i, v
                 end
             end
-            return iter
         end
     };
 
