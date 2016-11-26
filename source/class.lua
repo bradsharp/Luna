@@ -1,10 +1,7 @@
 --[[
 
-	luna class library
-	https://github.com/BradSharp/luna
-
-	MIT License
-	Copyright (c) 2016 Brad Sharp
+	luna class library https://github.com/BradSharp/luna
+	MIT License Copyright (c) 2016 Brad Sharp
 
 ]]
 
@@ -132,15 +129,33 @@ local constructClass do
 	local definitionMetatable = {
 		__call = createObject,
 	}
+	local function duplicateTable(t)
+		local t2 = {}
+		for i, v in pairs(t) do
+			t2[i] = v
+		end
+		return t2
+	end
+	local function convertType(value, _type)
+		local valueType = type(value)
+		if _type == valueType then
+			return value
+		elseif _type == "string" then
+			if valueType == "number" then
+				return tostring(value)
+			end
+		elseif _type == "number" then
+			if valueType == "string" then
+				return tonumber(value)
+			end
+		end
+	end
 	function constructClass(definition, inherits)
 		for i, v in pairs(definition) do
 			assert(type(i) == "string",
-				"Invalid property name " .. tostring(i))
-			local vType = type(v)
-			if vType == "table" then
-				assert(v.set or v.get,
-					"Tables must be defined using accessors and mutators")
-			end
+				"Invalid index " .. tostring(i) .. " for " .. tostring(v))
+			assert(type(v) ~= "userdata", "Attempt to create property "
+				.. i .. " of type userdata use an accessor instead")
 		end
 		definition.__inherits = inherits or {}
 		definition.__sharp = true
@@ -162,8 +177,14 @@ local constructClass do
 							return function (this, ...)
 								return value(wrapper, ...)
 							end
-						elseif valueType == "table" and value.get then
-							return value.get(getWrapper(this))
+						elseif valueType == "table" then
+							if value.get then
+								return value.get(getWrapper(this))
+							else
+								local value = duplicateTable(value)
+								public[index] = value
+								return value
+							end
 						else
 							-- Assign it to the object
 							public[index] = value
@@ -186,8 +207,9 @@ local constructClass do
 				local public = rawget(this, "__properties")
 				local currentValue = public[index]
 				if currentValue then
-					if type(value) == type(currentValue) then
-						public[index] = value
+					local newValue = convertType(value, type(currentValue))
+					if newValue then
+						public[index] = newValue
 					else
 						error("Incompatible type")
 					end
@@ -195,13 +217,15 @@ local constructClass do
 					currentValue = getIndex(definition, index)
 					if currentValue then
 						local currentValueType = type(currentValue)
+						local newValue = convertType(value, currentValueType)
 						local valueType = type(value)
 						if currentValueType == "table" and currentValue.set then
 							currentValue.set(getWrapper(this), value)
 						elseif valueType == "function" then
-							error("Can not set " .. index)
-						elseif valueType == currentValueType then
-							public[index] = value
+							error(index .. " is not a valid member of "
+								.. tostring(this))
+						elseif newValue then
+							public[index] = newValue
 						else
 							error("Incompatible type")
 						end
