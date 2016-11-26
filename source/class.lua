@@ -150,7 +150,7 @@ local constructClass do
 			end
 		end
 	end
-	function constructClass(definition, inherits)
+	function constructClass(definition, inherits, base)
 		for i, v in pairs(definition) do
 			assert(type(i) == "string",
 				"Invalid index " .. tostring(i) .. " for " .. tostring(v))
@@ -234,12 +234,16 @@ local constructClass do
 							.. tostring(this))
 					end
 				end
+			end,
+			__call = function ()
+				return definition
 			end
 		}
 		-- Wrap the metamethods
 		for i, v in pairs(metamethods) do
 			local method = string.sub(i, 3)
-			if not (method == "index" or method == "newindex") then
+			if not (method == "index" or method == "newindex"
+				or method == "call") then
 				metatable[i] = function (this, ...)
 					return v(getWrapper(this), ...)
 				end
