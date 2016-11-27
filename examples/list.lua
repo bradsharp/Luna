@@ -1,4 +1,4 @@
-local class = require'lib/class'
+local class = require'lib/luna'
 
 local list = class {
 
