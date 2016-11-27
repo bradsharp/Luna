@@ -13,13 +13,13 @@ luna offers elegant syntax which allows you to build beautiful object oriented p
 Download the source file and place it in your projects directory. `require` the module and store it in the variable `class`
 
 ```lua
-local class = require'class'
+local class = require'luna'
 ```
 ### Definition
 Classes are defined as follows
 
 ```lua
-local class = require'class'
+local class = require'luna'
 
 local planet = class {
 
@@ -54,8 +54,6 @@ local object = wrapper()
 Properties are required to remain whatever type they are defined as, tables, userdatas and variable types should be defined using accessors.
 #### Creating
 ```lua
-local class = require'class'
-
 local planet = class {
     Name = "";
     Magnitude = 0;
@@ -75,8 +73,6 @@ Accessors are useful when you wish to store a table, userdata or value of unknow
 
 #### Creating
 ```lua
-local class = require'class'
-
 local planet = class {
     Radius = 0;
     SurfaceArea = {
@@ -101,8 +97,6 @@ print(ceres.SurfaceArea)
 Methods are functions which can be called on your class, the parameters given are the object followed by the parameters the method was called with.
 #### Creating
 ```lua
-local class = require'class'
-
 local planet = class {
     Mass = 0;
     GetGravitationalForce = function (this, distance)
@@ -129,8 +123,6 @@ print(this.GetGravitationalForce(473000))
 The `__construct` method is called when a new object is created. It allows you to set any private variables and prepare the class for use. It's parameters will be the object itself followed by any variables passed into the instance function.
 #### Creating
 ```lua
-local class = require'class'
-
 local planet = class {
     Name = "";
     Radius = 0;
@@ -150,8 +142,6 @@ print(ceres.Name, ceres.Radius)
 This module supports metamethods which can be added to your definition.
 
 ```lua
-local class = require'class'
-
 local planet = class {
     Name = "";
     __tostring = function (this)
@@ -194,8 +184,6 @@ In the case of two inherited classes having a different value for a property, th
 Static functions and variables exist within the definition itself rather than per object. They can be added to the definition in the same way that any other method or property is but they can not make use of the wrapper as mentioned in the scope section. They are currently partially supported.
 
 ```lua
-local class = require'class'
-
 local website = class {
     Domain = "http://www.";
 }
@@ -212,24 +200,4 @@ If you feel hurt by the fact I have suggested that Ceres is a planet, pretend it
 
 ## License
 
-MIT License
-
-Copyright (c) 2016 Brad Sharp
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+MIT License Copyright (c) 2016 Brad Sharp
