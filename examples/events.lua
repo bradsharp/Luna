@@ -4,7 +4,7 @@ local event do
     event = class {
         Connect = function (this, func)
             this.signals[func] = coroutine.wrap(func)
-            return function ()
+            return function () -- Return a disconnect function incase func was anonymous 
                 this.signals[func] = nil
             end
         end;
