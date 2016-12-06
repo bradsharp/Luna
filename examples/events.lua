@@ -1,24 +1,23 @@
 local class = require'lib/luna'
 
-local signal = class {
-	__construct = function (this, callback)
-		this.callback = callback
-	end;
-	Disconnect = function (this)
-		this.Connected = false
-		this.callback = nil
-	end;
-	Raise = function (this, ...)
-		if this.Connected and this.callback then
-			coroutine.wrap(this.callback)(...)
-		else
-			error("Signal has been disconnected")	
-		end
-	end;
-	Connected = true
-}
-
 local event do
+	local signal = class {
+		__construct = function (this, callback)
+			this.callback = callback
+		end;
+		Disconnect = function (this)
+			this.Connected = false
+			this.callback = nil
+		end;
+		Raise = function (this, ...)
+			if this.Connected and this.callback then
+				coroutine.wrap(this.callback)(...)
+			else
+				error("Signal has been disconnected")	
+			end
+		end;
+		Connected = true
+	}
     event = class {
         Connect = function (this, func)
 			local newSignal = signal(func)
