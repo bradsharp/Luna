@@ -12,7 +12,7 @@ local event do
             this.signals[func] = nil
         end;
         Raise = function (this, ...)
-            for func, thread in ipairs(this.signals) do
+            for func, thread in pairs(this.signals) do
                 thread(...)
             end
         end;
