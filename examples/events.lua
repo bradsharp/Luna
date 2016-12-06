@@ -1,5 +1,6 @@
 local class = require'lib/luna'
 
+
 local event do
 	local signal = class {
 		__construct = function (this, callback)
