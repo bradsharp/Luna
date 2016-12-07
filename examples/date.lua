@@ -1,3 +1,5 @@
+local class = require'lib/luna'
+
 local date = class {
 
 	__construct = function (this, time)
