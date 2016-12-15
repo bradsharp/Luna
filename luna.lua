@@ -45,7 +45,8 @@ if not (setfenv or getfenv) then
 	end
 end
 
-function createObject(definition, ...)
+function createObject(definitionWrap, ...)
+	local definition = definitionWrap.__definition
 	local object = {__properties = {}, __private = {}}
 	setmetatable(object, definition.__metatable)
 	local constructor = definition.__construct
@@ -56,7 +57,7 @@ function createObject(definition, ...)
 end
 
 function getIndex(definition, index)
-	local value = definition[index]
+	local value = rawget(definition, index)
 	if value then
 		return value
 	else
@@ -88,8 +89,97 @@ function getMetamethods(definition)
 end
 
 local constructClass do
+
+	local definitionBase = {
+		GetProperties = function (wrapper)
+			local definition = wrapper.__definition
+			local properties = {}
+			for i, v in pairs(definition) do
+				if string.sub(i, 1, 2) ~= "__" then
+					local valueType = type(v)
+					if valueType == "table" then
+						if not (v.set or v.get) then
+							properties[i] = v
+						end
+					elseif valueType ~= "function" then
+						properties[i] = v
+					end
+				end
+			end
+			return properties
+		end,
+
+		GetMetamethods = function (wrapper)
+			local definition = wrapper.__definition
+			local methods = {}
+			for i, v in pairs(definition) do
+				if string.sub(i, 1, 2) == "__" then
+					local valueType = type(v)
+					if valueType == "function" then
+						methods[i] = v
+					end
+				end
+			end
+			return methods
+		end,
+
+		GetMethods = function (wrapper)
+			local definition = wrapper.__definition
+			local methods = {}
+			for i, v in pairs(definition) do
+				if string.sub(i, 1, 2) ~= "__" then
+					local valueType = type(v)
+					if valueType == "function" then
+						methods[i] = v
+					end
+				end
+			end
+			return methods
+		end,
+
+		GetAccessors = function (wrapper)
+			local definition = wrapper.__definition
+			local accessors = {}
+			for i, v in pairs(definition) do
+				local valueType = type(v)
+				if valueType == "table" then
+					if v.get then
+						accessors[i] = v.get
+					end
+				end
+			end
+			return accessors
+		end,
+
+		GetMutators = function (wrapper)
+			local definition = wrapper.__definition
+			local mutators = {}
+			for i, v in pairs(definition) do
+				local valueType = type(v)
+				if valueType == "table" then
+					if v.set then
+						mutators[i] = v.set
+					end
+				end
+			end
+			return mutators
+		end
+	}
+
+	local function definitionIndex(wrapper, index)
+		if definitionBase[index] then
+			return definitionBase[index]
+		else
+			return getIndex(wrapper.__definition, index)
+		end
+	end
+	local function throwIndexError()
+		error("Definition is locked from editing", 2)
+	end
 	local definitionMetatable = {
 		__call = createObject,
+		__index = definitionIndex,
+		__newindex = throwIndexError
 	}
 	local function duplicateTable(t)
 		local t2 = {}
@@ -119,32 +209,40 @@ local constructClass do
 			__newindex = env
 		}))
 	end
-	function constructClass(definition, inherits, base)
-		for i, v in pairs(definition) do
-			if type(i) ~= "string" then
-				error("Invalid index " .. tostring(i) ..
-					" for " .. tostring(v), 2)
-			else
-				local valueType = type(v)
-				if valueType == "userdata" then
-					error("Attempt to create property " .. i ..
-						" of type userdata use an accessor instead", 2)
-				elseif valueType == "function" then
-					privenv(v, {base = definition})
-				elseif type(v) == "table" then
-					if v.get then privenv(v.get, {base = definition}) end
-					if v.set then privenv(v.set, {base = definition}) end
+	function constructClass(definition, inherits)
+		local wrapper = {__definition = definition}
+		do local priv = {
+				base = wrapper,
+				__priv = true
+			}
+			for i, v in pairs(definition) do
+				if type(i) ~= "string" then
+					error("Invalid index " .. tostring(i) ..
+						" for " .. tostring(v), 2)
+				else
+					local valueType = type(v)
+					if valueType == "userdata" then
+						error("Attempt to create property " .. i ..
+							" of type userdata use an accessor instead", 2)
+					elseif valueType == "function" then
+						privenv(v, duplicateTable(priv))
+					elseif type(v) == "table" then
+						if v.get then privenv(v.get, duplicateTable(priv)) end
+						if v.set then privenv(v.set, duplicateTable(priv)) end
+					end
 				end
 			end
 		end
-		definition.__inherits = inherits or {}
-		definition.__sharp = true
+		definition.__inherits = {}
+		for _, v in ipairs(inherits or {}) do
+			table.insert(definition.__inherits, v.__definition)
+		end
 		local metamethods = getMetamethods(definition)
 		local metatable = {
 			__index = function (this, index)
-				assert(string.sub(index, 1, 2) ~= "__",
-					"Metaindexing is forbidden")
-				-- Is it in the private scope?
+				if string.sub(index, 1, 2) == "__" then
+					error("Metaindexing is forbidden", 2)
+				end
 				local public = rawget(this, "__properties")
 				local value = public[index]
 				if value then
@@ -171,23 +269,24 @@ local constructClass do
 					else
 						do
 							local env = getfenv(2)
-							if env and env.base == definition then
-								local value = rawget(this, "__private")[index]
-								return value
+							if env and env.__priv then
+								return rawget(this, "__private")[index]
 							end
 						end
+						print(metamethods.__index)
 						if metamethods.__index then
 							return metamethods.__index(this, index)
                     	else
 							error("'" .. index .. "' is not a valid member of "
-								.. tostring(this), 1)
+								.. tostring(this), 2)
 						end
 					end
 				end
 			end,
 			__newindex = function (this, index, value)
-				assert(string.sub(index, 1, 2) ~= "__",
-					"Metaindexing is forbidden")
+				if string.sub(index, 1, 2) == "__" then
+					error("Metaindexing is forbidden", 2)
+				end
 				if metamethods.__newindex then
 					if metamethods.__newindex(this, index, value) then
 						return
@@ -221,7 +320,7 @@ local constructClass do
 					else
 						local internal do
 							local env = getfenv(2)
-							internal = env and env.base == definition or false
+							internal = env and env.__priv or false
 						end
 						if internal then
 							local private = rawget(this, "__private")
@@ -246,19 +345,18 @@ local constructClass do
 		end
 		definition.__construct = metamethods.__construct
 		definition.__metatable = metatable
-		return setmetatable(definition, definitionMetatable)
+		return setmetatable(wrapper, definitionMetatable)
 	end
 end
 
 function class(...)
 	local parameters = {...}
-	if type(parameters[1] == "table") and
-		rawget(parameters[1], "__sharp") then -- Inheritance
+	if rawget(parameters[1], "__definition") then
 		return function (definition)
 			return constructClass(definition, parameters)
 		end
-	else -- Definition
-		return constructClass(parameters[1], {})
+	else
+		return constructClass(parameters[1])
 	end
 end
 
