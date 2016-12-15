@@ -186,7 +186,9 @@ local constructClass do
 				assert(string.sub(index, 1, 2) ~= "__",
 					"Metaindexing is forbidden")
 				if metamethods.__newindex then
-					metamethods.__newindex(this, index, value)
+					if metamethods.__newindex(this, index, value) then
+						return
+					end
 				end
 				local public = rawget(this, "__properties")
 				local currentValue = public[index]
