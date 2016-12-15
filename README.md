@@ -154,7 +154,6 @@ This module supports multiple inheritance which means a class can inherit many o
 local planet = class {
     Age = 0;
     Name = "";
-    
 }
 
 local solarSystem = class {
@@ -173,19 +172,36 @@ local localPlanet = class (solarSystem, planet) {}
 In the case of two inherited classes having a different value for a property, the class that is first in the list of inherited classes will be considered more important and therefore have its value used. This is also the case for metamethods.
 
 ### Static
-Static functions and variables exist within the definition itself rather than per object. They can be added to the definition in the same way that any other method or property is but they can not make use of the wrapper as mentioned in the scope section. They are currently partially supported.
+Static functions and variables exist within the definition itself rather than per object. They can be added to the definition in the same way that any other method or property is. It is up to you to ensure you know what is static and what is not.
 
 ```lua
-local website = class {
-    Domain = "http://www.";
+local someClass = class {
+    StaticMethod = function (msg)
+        print(msg)
+    end
 }
 
-print(website.Domain)
->> http://www.
+someClass.StaticMethod("Hello world!")
+>> Hello world!
 ```
 
 ### Reflection
-Reflection is not currently supported
+Reflection allows you to view information about a class.
+
+```lua
+local planet = class {
+    Age = 0;
+    Name = "";
+}
+
+local properties = planet:GetProperties()
+for i, v in pairs(properties) do
+    print(properties)
+end
+
+>> Age 0
+>> Name [empty_string]
+```
 
 ## Footnote
 If you feel hurt by the fact I have suggested that Ceres is a planet, pretend it's the 1800's.
