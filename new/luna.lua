@@ -5,30 +5,52 @@
 
 ]]
 
-if not setfenv then -- Lua 5.2
-	local function findenv(f)
-	local level = 1
-	repeat
-		local name, value = debug.getupvalue(f, level)
-		if name == '_ENV' then return level, value end
-		level = level + 1
-	until name == nil
-	return nil end
-	getfenv = function (f) return(select(2, findenv(f)) or _G) end
-	setfenv = function (f, t)
-		local level = findenv(f)
-		if level then debug.setupvalue(f, level, t) end
-		return f
+if not (setfenv or getfenv) then
+	local envs = setmetatable({}, {__mode = "k"}) -- Annoying work around
+	local getinfo = debug.getinfo
+	local getupvalue = debug.getupvalue
+	local upvaluejoin = debug.upvaluejoin
+	setfenv = function (fn, env)
+	    fn = type(fn) == "function" and fn or
+			getinfo(fn and fn + 1 or 1, "f").func
+		envs[fn] = env
+	    local i = 1 repeat
+            local name = getupvalue(fn, i)
+            if name == "_ENV" then
+                upvaluejoin(fn, i, (function()
+	                return env
+	            end), 1)
+                break
+            elseif name == nil then
+                break
+            end
+            i = i + 1
+        until false
+	end
+	getfenv = function (fn)
+		fn = type(fn) == "function" and fn or
+			getinfo(fn and fn + 1 or 1, "f").func
+		if envs[fn] then
+			return envs[fn]
+		end
+        local i = 1 repeat
+            local name, value = getupvalue(fn, i)
+            if name == "_ENV" then
+                return value
+            elseif name == nil then
+                break
+            end
+            i = i + 1
+        until false
 	end
 end
 
 function createObject(definition, ...)
 	local object = {__properties = {}, __private = {}}
-	local wrapper = createWrapper(object)
 	setmetatable(object, definition.__metatable)
 	local constructor = definition.__construct
 	if constructor then
-		constructor(wrapper, ...)
+		constructor(object, ...)
 	end
 	return object
 end
@@ -90,12 +112,25 @@ local constructClass do
 			end
 		end
 	end
+	local function privenv(fn, priv)
+		local env = getfenv(fn)
+		setfenv(fn, setmetatable(priv, {
+			__index = env,
+			__newindex = env
+		}))
+	end
 	function constructClass(definition, inherits, base)
 		for i, v in pairs(definition) do
 			assert(type(i) == "string",
 				"Invalid index " .. tostring(i) .. " for " .. tostring(v))
 			assert(type(v) ~= "userdata", "Attempt to create property "
 				.. i .. " of type userdata use an accessor instead")
+			if type(v) == "function" then
+				privenv(v, {base = definition})
+			elseif type(v) == "table" then
+				if v.get then privenv(v.get, {base = definition}) end
+				if v.set then privenv(v.set, {base = definition}) end
+			end
 		end
 		definition.__inherits = inherits or {}
 		definition.__sharp = true
@@ -104,6 +139,7 @@ local constructClass do
 			__index = function (this, index)
 				assert(string.sub(index, 1, 2) ~= "__",
 					"Metaindexing is forbidden")
+				-- Is it in the private scope?
 				local public = rawget(this, "__properties")
 				local value = public[index]
 				if value then
@@ -113,13 +149,10 @@ local constructClass do
 					if value then
 						local valueType = type(value)
 						if valueType == "function" then
-							local wrapper = getWrapper(this)
-							return function (this, ...)
-								return value(wrapper, ...)
-							end
+							return value
 						elseif valueType == "table" then
 							if value.get then
-								return value.get(getWrapper(this))
+								return value.get(this)
 							else
 								local value = duplicateTable(value)
 								public[index] = value
@@ -130,13 +163,22 @@ local constructClass do
 							public[index] = value
 							return value
 						end
-					elseif metamethods.__index then
-						return metamethods.__index(getWrapper(this), index)
-					elseif private then
-
-                    else
-						error("'" .. index .. "' is not a valid member of "
-							.. tostring(this))
+					else
+						do
+							local env = getfenv(2)
+							if env and env.base == definition then
+								local value = rawget(this, "__private")[index]
+								if value then
+									return value
+								end
+							end
+						end
+						if metamethods.__index then
+							return metamethods.__index(this, index)
+                    	else
+							error("'" .. index .. "' is not a valid member of "
+								.. tostring(this))
+						end
 					end
 				end
 			end,
@@ -144,7 +186,7 @@ local constructClass do
 				assert(string.sub(index, 1, 2) ~= "__",
 					"Metaindexing is forbidden")
 				if metamethods.__newindex then
-					metamethods.__newindex(getWrapper(this), index, value)
+					metamethods.__newindex(this, index, value)
 				end
 				local public = rawget(this, "__properties")
 				local currentValue = public[index]
@@ -162,7 +204,7 @@ local constructClass do
 						local newValue = convertType(value, currentValueType)
 						local valueType = type(value)
 						if currentValueType == "table" and currentValue.set then
-							currentValue.set(getWrapper(this), value)
+							currentValue.set(this, value)
 						elseif valueType == "function" then
 							error(index .. " is not a valid member of "
 								.. tostring(this))
@@ -172,8 +214,17 @@ local constructClass do
 							error("Incompatible type")
 						end
 					else
-						error("'" .. index .. "' is not a valid member of "
-							.. tostring(this))
+						local internal do
+							local env = getfenv(2)
+							internal = env and env.base == definition or false
+						end
+						if internal then
+							local private = rawget(this, "__private")
+							private[index] = value
+						else
+							error("'" .. index .. "' is not a valid member of "
+								.. tostring(this))
+						end
 					end
 				end
 			end,
@@ -181,16 +232,6 @@ local constructClass do
 				return definition
 			end
 		}
-		-- Wrap the metamethods
-		for i, v in pairs(metamethods) do
-			local method = string.sub(i, 3)
-			if not (method == "index" or method == "newindex"
-				or method == "call") then
-				metatable[i] = function (this, ...)
-					return v(getWrapper(this), ...)
-				end
-			end
-		end
 		definition.__construct = metamethods.__construct
 		definition.__metatable = metatable
 		return setmetatable(definition, definitionMetatable)
