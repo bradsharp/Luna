@@ -27,9 +27,8 @@ local planet = class {
 ```
 
 ### Scope
-This module offers classes a private and public scope. Private variables can only be indexed from within the definition while public variables can be indexed outside of the definition.
+This module offers classes a private and public scope. Private variables can only be indexed from within the definition while public variables can be indexed outside of the definition. Unlike the public scope, the private scope will not error when you attempt to set or get an index.
 
-When a function in the class is called a wrapper object is passed to the function as the first parameter. This wrapper allows you to set variables regardless of whether they are defined or not.
 ```lua
 local ceres = planet()
 print(ceres.PrivateVariable)
@@ -41,14 +40,7 @@ print(this.PrivateVariable)
 >> nil
 ```
 
-It also means that if you reference it outside the definition you will pass the wrapper object and not the object itself. In order to return the object just call the wrapper
-
-
-```lua
-local wrapper = this
-local object = wrapper()
-```
-
+When indexing a variable from the private scope any metamethods (index or newindex) that you have defined will *not* be invoked.
 
 ### Properties
 Properties are required to remain whatever type they are defined as, tables, userdatas and variable types should be defined using accessors.
