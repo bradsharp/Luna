@@ -1,4 +1,4 @@
-local class = require'lib/luna'
+local class = require'luna'
 
 local date = class {
 
@@ -25,21 +25,21 @@ local date = class {
 		this.minute = mm
 		this.second = s
 	end;
-  
+
 	Ticks = {get = function (this) return this.ticks end};
-  
+
 	Year = {get = function (this) return this.year end};
 	Month = {get = function (this) return this.month end};
 	Day = {get = function (this) return this.day end};
-  
+
 	Hour = {get = function (this) return this.hour end};
 	Minute = {get = function (this) return this.minute end};
 	Second = {get = function (this) return this.second end};
-  
+
 	__tostring = function (this)
-		return string.format("%02i:%02i:%02i %02i/%02i/%04i", 
+		return string.format("%02i:%02i:%02i %02i/%02i/%04i",
 			this.Hour, this.Minute, this.Second,
 			this.Day, this.Month, this.Year)
 	end
-  
+
 }

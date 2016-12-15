@@ -1,4 +1,4 @@
-local class = require"lib/luna"
+local class = require"luna"
 
 return class {
 	Points = {get = function (this) return this.points end},

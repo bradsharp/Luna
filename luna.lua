@@ -121,15 +121,20 @@ local constructClass do
 	end
 	function constructClass(definition, inherits, base)
 		for i, v in pairs(definition) do
-			assert(type(i) == "string",
-				"Invalid index " .. tostring(i) .. " for " .. tostring(v))
-			assert(type(v) ~= "userdata", "Attempt to create property "
-				.. i .. " of type userdata use an accessor instead")
-			if type(v) == "function" then
-				privenv(v, {base = definition})
-			elseif type(v) == "table" then
-				if v.get then privenv(v.get, {base = definition}) end
-				if v.set then privenv(v.set, {base = definition}) end
+			if type(i) ~= "string" then
+				error("Invalid index " .. tostring(i) ..
+					" for " .. tostring(v), 2)
+			else
+				local valueType = type(v)
+				if valueType == "userdata" then
+					error("Attempt to create property " .. i ..
+						" of type userdata use an accessor instead", 2)
+				elseif valueType == "function" then
+					privenv(v, {base = definition})
+				elseif type(v) == "table" then
+					if v.get then privenv(v.get, {base = definition}) end
+					if v.set then privenv(v.set, {base = definition}) end
+				end
 			end
 		end
 		definition.__inherits = inherits or {}
@@ -168,16 +173,14 @@ local constructClass do
 							local env = getfenv(2)
 							if env and env.base == definition then
 								local value = rawget(this, "__private")[index]
-								if value then
-									return value
-								end
+								return value
 							end
 						end
 						if metamethods.__index then
 							return metamethods.__index(this, index)
                     	else
 							error("'" .. index .. "' is not a valid member of "
-								.. tostring(this))
+								.. tostring(this), 1)
 						end
 					end
 				end
@@ -197,7 +200,7 @@ local constructClass do
 					if newValue then
 						public[index] = newValue
 					else
-						error("Incompatible type")
+						error("Incompatible type", 1)
 					end
 				else
 					currentValue = getIndex(definition, index)
@@ -209,11 +212,11 @@ local constructClass do
 							currentValue.set(this, value)
 						elseif valueType == "function" then
 							error(index .. " is not a valid member of "
-								.. tostring(this))
+								.. tostring(this), 1)
 						elseif newValue then
 							public[index] = newValue
 						else
-							error("Incompatible type")
+							error("Incompatible type", 1)
 						end
 					else
 						local internal do
@@ -225,7 +228,7 @@ local constructClass do
 							private[index] = value
 						else
 							error("'" .. index .. "' is not a valid member of "
-								.. tostring(this))
+								.. tostring(this), 1)
 						end
 					end
 				end
@@ -234,6 +237,13 @@ local constructClass do
 				return definition
 			end
 		}
+		for i, v in pairs(metamethods) do
+			local method = string.sub(i, 3)
+			if not (method == "index" or method == "newindex"
+				or method == "call") then
+				metatable[i] = v
+			end
+		end
 		definition.__construct = metamethods.__construct
 		definition.__metatable = metatable
 		return setmetatable(definition, definitionMetatable)

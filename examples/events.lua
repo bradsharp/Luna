@@ -1,4 +1,4 @@
-local class = require'lib/luna'
+local class = require'luna'
 
 
 local event do
@@ -14,7 +14,7 @@ local event do
 			if this.Connected and this.callback then
 				coroutine.wrap(this.callback)(...)
 			else
-				error("Signal has been disconnected")	
+				error("Signal has been disconnected")
 			end
 		end;
 		Connected = true
