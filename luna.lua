@@ -257,7 +257,7 @@ end
 
 function class(...)
 	local parameters = {...}
-	if type(parameters[1] == "table") and
+	if type(parameters[1]) == "table" and
 		rawget(parameters[1], "__sharp") then -- Inheritance
 		return function (definition)
 			return constructClass(definition, parameters)
