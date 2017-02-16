@@ -1,6 +1,6 @@
 local class = require'luna'
 
-return class {
+local poly = class {
 	Points = {get = function (this) return this.points end},
 	__construct = function (this, ...)
 		this.points = {...}
