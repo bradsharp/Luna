@@ -204,7 +204,7 @@ end
 ```
 
 ## Footnote
-If you feel hurt by the fact I have suggested that Ceres is a planet, pretend it's the 1800's.
+If you feel offended by the fact I suggested that Ceres is a planet, pretend it's the 1800's.
 
 ## License
 
